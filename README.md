@@ -16,16 +16,21 @@ pip install ws4py
 
 pip install gunicorn
 
+Sources
+=======
+
+# https://github.com/abramhindle/WebSocketsExamples 2016-03-13
+
 Contributors / Licensing
 ========================
 
-Generally everything is LICENSE'D under the Apache 2 license by Abram Hindle.
+Generally everything is LICENSE'D under the Apache 2 license by Abram Hindle, Raman Dhatt.
 
 freetests.py is LICENSE'D under a BSD-like license:
 
 From ws4py
 
-Copyright (c) 2011-2014, Sylvain Hellegouarch, Abram Hindle
+Copyright (c) 2011-2016, Sylvain Hellegouarch, Abram Hindle, Raman Dhatt
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -57,3 +62,4 @@ Contributors
 
 * Mark Galloway
 * Abram Hindle
+* Raman Dhatt

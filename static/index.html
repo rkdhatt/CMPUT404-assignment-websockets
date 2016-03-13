@@ -42,20 +42,83 @@ function debug(str) {
 }
 debug("Test");
 
+function sendJSONXMLHTTPRequest(method, url, objects, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState==4) {
+            try {
+                if (xhr.status==200) {
+                    //XXX: parse some JSON from the request!
+                    var json_obj = JSON.parse(xhr.responseText);
+                    //XXX: Pass the data to the callback!
+                    // make sure callback is not null.
+                    if (callback != null)
+                    {
+                        return callback(json_obj);
+                    }
+                }
+            } 
+            catch(e) {
+                alert('Error: ' + e.name);
+            }
+        }
+    };
+    //XXX: POST to a URL
+    xhr.open(method, url, true);
+    //XXX: set the mimetype and the accept headers!
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.setRequestHeader("Content-Type", "application/json");
+    // Remember to use application/json !
+    xhr.send(JSON.stringify(objects));
+}
+
 world = {};
 
 //XXX: TODO Make this prettier!
-function drawCircle(context,entity) {
+function drawSquare(context,entity) {
     with(context) {
-        beginPath();                
-        lineWidth = 3;
+        beginPath();              
+        lineWidth = 10;
+        shadowBlur = 10;
+        shadowColor = entity["colour"];
+        lineJoin = lineCap = 'round';
         var x = entity["x"];
         var y = entity["y"];
-        //moveTo(x,y);
         fillStyle = entity["colour"];
         strokeStyle = fillStyle;
-        arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);  
+        globalAlpha = 1;
+        rect(x-100, y-100, 100, 100); 
         stroke();                                
+    }
+}
+
+// Works when dragging mouse
+function drawRandomCircleRadiusOpacity(context, entity) {
+     with(context) {
+        var x = entity["x"];
+        var y = entity["y"];
+        beginPath();
+        lineWidth = 1;
+        shadowBlur = 0;
+        shadowColor = entity["colour"];
+        lineJoin = lineCap = 'round';
+        fillStyle = entity["colour"];
+        strokeStyle = entity["colour"];
+        globalAlpha = entity["opacity"];
+        arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false); 
+        fill();
+        stroke();                         
+    }
+}
+
+function drawShape(context, entity) {
+    if (entity['type'] === 'circle')
+    {
+        drawRandomCircleRadiusOpacity(context, entity);
+    }
+    else
+    {
+        drawSquare(context, entity);
     }
 }
 
@@ -83,7 +146,7 @@ function renderFrame() {
     clearFrame();
     for (var key in world) {
         var entity = world[key];
-        drawCircle(context,prepEntity(entity));
+        drawShape(context,prepEntity(entity));
     }
 }
 
@@ -123,9 +186,11 @@ function getPosition(e) {
 
 function addEntity(entity, data) {
     world[entity] = data;
-    drawNextFrame(); // (but should we?)
-    //XXX: Send a XHTML Request that updates the entity you just modified!
+    //drawNextFrame(); // (but should we?)
+    //XXX: Send a XHTML Request that updates the entity you just  modified!
+    sendJSONXMLHTTPRequest('POST', '/entity/' + entity, world[entity], drawNextFrame);
 }
+
 var counter = 0;
 function addEntityWithoutName(data) {
     var name = "X"+(counter++)%100;
@@ -231,18 +296,21 @@ mouse = (function() {
 // Add the application specific mouse listeners!
 //XXX: TODO Make these prettier!
 mouse.mousedowners.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'blue'});
+    addEntityWithoutName({'x':x,'y':y,'colour':'purple','type':'square'}); // teal blue
 });
 
 mouse.mouseuppers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'red'});
+    addEntityWithoutName({'x':x,'y':y,'colour':'orange','type':'square'});
 });
 
 mouse.mousedraggers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'green',
-                          'radius':10});
+    addEntityWithoutName({'x':x,'y':y,'colour':'red','type':'circle','opacity':Math.random(),'radius':getRandomInt(5, 20)});
 });
 
+
+function getRandomInt(min, max){
+    return Math.floor(Math.random() * (max-min+1)) + min;
+}
 
 function update() {
     drawFrame();
@@ -254,6 +322,12 @@ function wsSetup() {
     socket = new WebSocket(url);
     socket.onopen = function() {
         //XXX: TODO What are you going to do here?
+        // Sending ajax request when opening
+        sendJSONXMLHTTPRequest('GET','http://'+host+'/world',null,function setWorld(updatedWorld){
+        // get up-to-date world, then draw the frame.
+        world = updatedWorld;
+        drawFrame();
+        });
     };
     socket.onerror = function(msg) {
         debug("WebSocket Error:" + msg.data);
@@ -261,7 +335,13 @@ function wsSetup() {
     socket.onmessage = function(msg) {  
         try {
             debug("WebSocket Recv:" + msg.data);
-            //XXX: TODO What are you going to do here?            
+            //XXX: TODO What are you going to do here?
+            var message = JSON.parse(msg.data);
+            for (key in message) {
+                world[key] = message[key]
+            }
+            drawNextFrame();
+            update();
         } catch (e) {
             alert("socket on message: " + e);
         }
