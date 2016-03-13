@@ -17,9 +17,15 @@ pip install ws4py
 pip install gunicorn
 
 Sources
-=======
+==========
 
-# https://github.com/abramhindle/WebSocketsExamples 2016-03-13
+- Used client and websocket example from Dr.Hindles WebSocketExamples project:
+
+   https://github.com/abramhindle/WebSocketsExamples 2016-03-13
+
+- Used customization of index.html and ajax (when opening/refreshing url) from previous ajax assignment:
+
+   https://github.com/rkdhatt/CMPUT404-assignment-ajax 2016-03-13
 
 Contributors / Licensing
 ========================
