@@ -186,9 +186,10 @@ function getPosition(e) {
 
 function addEntity(entity, data) {
     world[entity] = data;
-    //drawNextFrame(); // (but should we?)
-    //XXX: Send a XHTML Request that updates the entity you just  modified!
+    var packet = {};
+    packet[entity] = data;    
     socket.send(JSON.stringify(packet));
+    drawNextFrame();
 }
 
 var counter = 0;
@@ -326,7 +327,11 @@ function wsSetup() {
         sendJSONXMLHTTPRequest('GET','http://'+host+'/world',null,function setWorld(updatedWorld){
         // get up-to-date world, then draw the frame.
         world = updatedWorld;
-        drawFrame();
+        for (var key in world) 
+        {
+            drawShape(context, world[key])
+        }
+        update();
         });
     };
     socket.onerror = function(msg) {
